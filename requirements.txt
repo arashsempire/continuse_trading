@@ -1,7 +1,13 @@
-pytest
+# pip install -r requirements.txt
+dotenv
 
 pytest
 black
 isort
 flake8
 pre-commit
+
+pandas
+numpy
+dask
+requests
