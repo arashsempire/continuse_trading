@@ -10,4 +10,5 @@ pre-commit
 pandas
 numpy
 dask
-requests
+# requests
+httpx

@@ -1,6 +1,3 @@
-# from api.lbank_api import LBankAPI
-
-
 class BasicTradingStrategy:
     def __init__(self, lbank_api, buy_threshold, sell_threshold):
         self.lbank_api = lbank_api
