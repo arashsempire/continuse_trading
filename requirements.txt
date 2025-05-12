@@ -10,5 +10,6 @@ pre-commit
 pandas
 numpy
 dask
+structlog
 # requests
 httpx
