@@ -3,95 +3,102 @@ import logging
 import sys
 
 
+# Define a base logger class that automatically binds the class name
 class BaseLogger:
     def __init__(self):
-        # Get the class name and bind it to the logger
+        """Initializes the logger and binds the class name."""
         self.log = structlog.get_logger().bind(class_name=self.__class__.__name__)
 
 
-# def configure_logging(lvl: int =3):
-def configure_logging(lvl=logging.WARNING):
-    '''
-    :lvl: 0 - DEBUG, 1 - INFO, 2 - WARNING, 3 - ERROR,
-    '''
-    # Configure structlog
+# Function to configure logging settings for the application
+def configure_logging(log_level=logging.INFO):
+    """
+    Configures structlog and standard logging.
+
+    Args:
+        log_level (int): The minimum logging level to output (e.g., logging.DEBUG,
+        logging.INFO).
+                         Defaults to logging.INFO.
+    """
+    # Basic validation for log level
+    if not isinstance(log_level, int):
+        print(f"Invalid log level type: {type(log_level)}. Defaulting to INFO.")
+        log_level = logging.INFO
+
+    # Configure structlog processors
     structlog.configure(
         processors=[
-            structlog.processors.TimeStamper(fmt="iso"),  # Add ISO timestamps
-            structlog.processors.add_log_level,           # Add log level
-            structlog.processors.StackInfoRenderer(),     # Add stack info for exceptions
-            structlog.processors.format_exc_info,         # Format exceptions
-            # structlog.stdlib.ProcessorFormatter.wrap_for_formatter,  # Wrap for logging module
-            structlog.dev.ConsoleRenderer()
+            # Merge context variables
+            structlog.contextvars.merge_contextvars,
+            # Add log level (e.g., 'info', 'warning')
+            structlog.processors.add_log_level,
+            # Render stack info for exceptions
+            structlog.processors.StackInfoRenderer(),
+            # Format exception info
+            structlog.processors.format_exc_info,
+            # Add ISO timestamp (local time)
+            structlog.processors.TimeStamper(fmt="iso", utc=False),
+            # Pretty-print logs to console with colors
+            structlog.dev.ConsoleRenderer(colors=True),
+            # Use structlog.processors.JSONRenderer() for JSON output
         ],
-        # context_class=dict,                               # Use dict for context
-        logger_factory=structlog.stdlib.LoggerFactory(),  # Use standard logging
-        wrapper_class=structlog.stdlib.BoundLogger,       # Use BoundLogger for context
-        cache_logger_on_first_use=True,                   # Cache loggers for performance
+        # Use standard logging factory
+        logger_factory=structlog.stdlib.LoggerFactory(),
+        # Use standard bound logger
+        wrapper_class=structlog.stdlib.BoundLogger,
+        # Cache loggers for performance
+        cache_logger_on_first_use=True,
     )
 
-    # Configure the standard logging module
-    # formatter = structlog.stdlib.ProcessorFormatter(
-    #     processor=structlog.processors.JSONRenderer(),  # Output as JSON
+    # Configure the standard logging module (root logger)
+    # No need for a specific formatter here as structlog handles it via ConsoleRenderer
+    # or JSONRenderer
+
+    # Console Handler
+    console_handler = logging.StreamHandler(sys.stdout)
+    # The handler's formatter is effectively managed by structlog's processors
+
+    # File Handler (Optional: uncomment to enable file logging)
+    # file_handler = logging.FileHandler("app.log")
+    # You might want a different renderer for files (e.g., JSONRenderer)
+    # file_formatter = structlog.stdlib.ProcessorFormatter(
+    #     processor=structlog.processors.JSONRenderer(),
     # )
+    # file_handler.setFormatter(file_formatter)
 
-    handler = logging.StreamHandler(sys.stdout)  # Log to stdout
-    # handler.setFormatter(formatter)
-
-    file_handler = logging.FileHandler("app.log")  # Log to a file
-    # file_handler.setFormatter(formatter)
-
+    # Get the root logger and configure it
     root_logger = logging.getLogger()
-    root_logger.addHandler(handler)
-    root_logger.addHandler(file_handler)
-    root_logger.setLevel(lvl)
-    # structlog.configure(
-    # wrapper_class=structlog.make_filtering_bound_logger(lvl*10)
-    # )
+    # Clear existing handlers (optional, prevents duplicate logs if run multiple times)
+    if root_logger.hasHandlers():
+        root_logger.handlers.clear()
+
+    root_logger.addHandler(console_handler)
+    # root_logger.addHandler(file_handler) # Uncomment to add file handler
+    root_logger.setLevel(log_level)  # Set the minimum level for the root logger
+
+    # Initial log message to confirm configuration
+    initial_log = structlog.get_logger("LoggerConfig")
+    initial_log.info("Logging configured", level=logging.getLevelName(log_level))
 
 
-# Define a custom processor to filter debug logs
-def debug_log_filter(_, method_name, event_dict):
-    if method_name == "debug":
-        return event_dict  # Allow debug logs
-    raise structlog.DropEvent  # Drop non-debug logs
+# Example usage (typically called once at application startup)
+if __name__ == "__main__":
+    configure_logging(logging.DEBUG)  # Configure for DEBUG level
 
+    log = structlog.get_logger("ExampleApp")
+    log.debug("This is a debug message.", data={"key": "value"})
+    log.info("This is an info message.")
+    log.warning("This is a warning.")
+    log.error("This is an error.")
+    try:
+        1 / 0
+    except ZeroDivisionError:
+        log.exception("Caught an exception.")
 
-# Define a custom processor to filter debug logs
-def info_log_filter(_, method_name, event_dict):
-    if method_name == "info":
-        return event_dict  # Allow debug logs
-    raise structlog.DropEvent  # Drop non-debug logs
+    # Example of using BaseLogger
+    class MyService(BaseLogger):
+        def do_something(self):
+            self.log.info("Doing something in MyService.")
 
-
-# Define a custom processor to filter debug logs
-def error_log_filter(_, method_name, event_dict):
-    if method_name == "error":
-        return event_dict  # Allow debug logs
-    raise structlog.DropEvent  # Drop non-debug logs
-
-
-# Define a custom processor to filter debug logs
-def warning_log_filter(_, method_name, event_dict):
-    if method_name == "warning":
-        return event_dict  # Allow debug logs
-    raise structlog.DropEvent  # Drop non-debug logs
-
-
-# Define a custom processor to filter debug logs
-def critical_log_filter(_, method_name, event_dict):
-    if method_name == "critical":
-        return event_dict  # Allow debug logs
-    raise structlog.DropEvent  # Drop non-debug logs
-
-
-# # Configure structlog
-# structlog.configure(
-#     processors=[
-#         debug_log_filter,  # Filter out non-debug logs
-#         structlog.processors.add_log_level,  # Add log level to the log
-#         structlog.processors.JSONRenderer(),  # Render logs as JSON
-#     ],
-#     context_class=dict,
-#     logger_factory=structlog.PrintLoggerFactory(),  # Print logs to stdout
-# )
+    service = MyService()
+    service.do_something()
