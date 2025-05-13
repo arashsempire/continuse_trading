@@ -1,7 +1,7 @@
 import asyncio
 
 from . import RESTAccount, RESTTrading, RESTData
-from . import WSClient
+from . import WSClient, WSMessageProcessor
 from ..utils import BaseLogger
 
 from .API_utils import StateCache
@@ -29,11 +29,17 @@ class ClientManager(BaseLogger):
         self.rest_trading = RESTTrading(api_key, secret_key)
         self.rest_data = RESTData(api_key, secret_key)
 
-        # Initialize WebSocket client
-        self.ws_client = WSClient(api_key, secret_key)
-
         # Internal state
         self.state = StateCache()
+
+        # Message processor and WebSocket client
+        self.processor = WSMessageProcessor()
+        self.ws_client = WSClient(api_key, secret_key, self.processor)
+
+        # Register WS message handlers
+        self.processor.register_handler("balance.update", self._on_balance_update)
+        self.processor.register_handler("order.update", self._on_order_update)
+        self.processor.register_handler("kline.update", self._on_kline_update)
 
         # Event loop tasks
         self._reconnect_task = None
@@ -57,8 +63,9 @@ class ClientManager(BaseLogger):
         """Connects to WebSocket and subscribes to balance and order streams."""
         try:
             await self.ws_client.connect()
-            await self.ws_client.subscribe_balances(self._on_balance_update)
-            await self.ws_client.subscribe_orders(self._on_order_update)
+            await self.ws_client.subscribe_balances()  # simplified
+            await self.ws_client.subscribe_orders()
+            await self.ws_client.subscribe_kline_streams()
             self.log.info("WebSocket connected and subscribed.")
         except Exception as e:
             self.log.error("Failed to connect or subscribe to WebSocket.", error=str(e))
@@ -116,22 +123,35 @@ class ClientManager(BaseLogger):
         await self.state.set_orders(orders)
         self.log.info("Initial REST snapshot fetched.", balances=balances)
 
-    async def _on_balance_update(self, data):
-        """Callback for handling balance updates from WebSocket."""
-        await self.state.update_balances(data)
-        balances = await self.state.get_balances()
+    async def _on_balance_update(self, message: dict):
+        """Handler for balance.update message."""
+        balances = message.get("balances", {})
+        await self.state.update_balances(balances)
         self.log.debug("Balance updated from WS.", balances=balances)
 
-    async def _on_order_update(self, data):
-        """Callback for handling order updates from WebSocket."""
+    async def _on_order_update(self, message: dict):
+        """Handler for order.update message."""
+        data = message.get("order", {})
         order_id = data.get("order_id")
+        if not order_id:
+            return
         if data.get("status") == "closed":
             await self.state.close_order(order_id)
         else:
             await self.state.update_order(order_id, data)
         self.log.debug("Order updated from WS.", order=data)
 
-    async def place_order(self, symbol, side, quantity, price=None):
+    async def _on_kline_update(self, message: dict):
+        """Handler for kline.update message."""
+        symbol = message.get("symbol")
+        kbar = message.get("kline")
+        if symbol and kbar:
+            await self.state.update_kbar(symbol, kbar)
+            self.log.debug("Kline updated from WS.", symbol=symbol, kbar=kbar)
+
+    async def place_order(
+        self, symbol: str, side: str, quantity: float, price: float = None
+    ):
         """
         Places an order using the REST API.
 
