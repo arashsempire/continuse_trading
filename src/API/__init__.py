@@ -1,8 +1,6 @@
-from .REST import AccountClient
-from .REST import MarketDataClient
-from .REST import TradingClient
-from .WebSockets import WebSocketClient
+from .REST import RESTAccount
+from .REST import RESTData
+from .REST import RESTTrading
+from .WebSockets import WSClient
 
-__all__ = [
-    'AccountClient', 'MarketDataClient', 'TradingClient', 'WebSocketClient'
-    ]
+__all__ = ["RESTAccount", "RESTData", "RESTTrading", "WSClient"]

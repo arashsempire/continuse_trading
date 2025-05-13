@@ -1,4 +1,4 @@
-from .WSClient import WebSocketClient
+from .WSClient import WebSocketClient as WSClient
 
 
-__all__ = ['WebSocketClient']
+__all__ = ["WSClient"]

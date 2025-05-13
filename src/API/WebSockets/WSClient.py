@@ -10,7 +10,7 @@ from .WSConnection import WSConnectionManager
 from .WSSubscription import SubscriptionManager
 from .WSMessage_Processor import MessageProcessor
 
-from ..utils import load_config, API_KEY, API_SECRET, WEBSOCKET_URI
+from ..API_utils import load_config, API_KEY, API_SECRET, WEBSOCKET_URI
 from ...utils import BaseLogger, configure_logging
 
 

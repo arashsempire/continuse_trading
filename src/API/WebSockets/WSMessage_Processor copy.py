@@ -18,7 +18,9 @@ class MessageProcessor(BaseLogger):
         message_action = data.get("action")
         message_type = data.get("type")
         request_message = data if isinstance(data.get(message_type), str) else None
-        subscribe_message = data if not isinstance(data.get(message_type), str) else None
+        subscribe_message = (
+            data if not isinstance(data.get(message_type), str) else None
+        )
 
         if subscribe_message and message_type == "kbar":
             self.latest_price = data["kbar"].get("c")
@@ -50,7 +52,9 @@ class MessageProcessor(BaseLogger):
             self.log.info("KBar request message received")
             if "records" in data and "columns" in data:
                 df = pd.DataFrame(data["records"], columns=data["columns"])
-                self.daily_open, self.daily_open_ts = df[["timestamp", "close"]].iloc[-1]
+                self.daily_open, self.daily_open_ts = df[["timestamp", "close"]].iloc[
+                    -1
+                ]
                 self.log.info(
                     "Daily open price and timestamp updated",
                     daily_open=self.daily_open,
