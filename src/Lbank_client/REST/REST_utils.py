@@ -3,7 +3,7 @@ import hashlib
 import string
 import random
 from typing import Dict, Any, Optional
-from ...utils import BaseLogger
+from .logger import BaseLogger
 
 
 # --- Custom Exception for API Errors ---

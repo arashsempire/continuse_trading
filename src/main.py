@@ -1,6 +1,6 @@
 from strategies import Strategy
 # from API import WebSocketClient
-from API import LBankAPI
+from Lbank_client import LBankAPI
 from utils import configure_logging
 import time
 import asyncio

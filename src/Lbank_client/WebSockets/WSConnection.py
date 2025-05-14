@@ -2,7 +2,7 @@ import websockets
 import asyncio
 import json
 from typing import Optional
-from utils import BaseLogger
+from .logger import BaseLogger
 
 
 class WSConnectionManager(BaseLogger):

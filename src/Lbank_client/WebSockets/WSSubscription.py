@@ -5,7 +5,7 @@ from typing import Optional, Dict, Any
 
 # Use relative import for WSSignature assuming it's in the same directory/package
 from .WSSignature import SignatureManager
-from ...utils import BaseLogger
+from .logger import BaseLogger
 
 
 # --- Custom Exception (Optional but recommended) ---

@@ -2,7 +2,7 @@ from .REST_utils import LBankAuthUtils
 from typing import Dict, Any
 
 
-class AccountClient(LBankAuthUtils):
+class RESTAccount(LBankAuthUtils):
     """
     Provides methods for retrieving account information and historical data from the LBank API.
     """
@@ -17,7 +17,9 @@ class AccountClient(LBankAuthUtils):
         self.log.debug("Fetching account information")
         params = {}
         signed_params = self._sign(params)
-        return await self._request("POST", "supplement/user_info_account.do", signed_params)
+        return await self._request(
+            "POST", "supplement/user_info_account.do", signed_params
+        )
 
     async def get_transaction_history(
         self,
@@ -25,7 +27,7 @@ class AccountClient(LBankAuthUtils):
         startTime: str = None,
         endTime: str = None,
         fromId: str = None,
-        limit: int = None
+        limit: int = None,
     ) -> Dict[str, Any]:
         """
         Retrieve historical transaction details.
@@ -46,7 +48,7 @@ class AccountClient(LBankAuthUtils):
             startTime=startTime,
             endTime=endTime,
             fromId=fromId,
-            limit=limit
+            limit=limit,
         )
         params = {"symbol": symbol}
         if startTime:
@@ -58,7 +60,9 @@ class AccountClient(LBankAuthUtils):
         if limit:
             params["limit"] = limit
         signed_params = self._sign(params)
-        return await self._request("POST", "supplement/transaction_history.do", signed_params)
+        return await self._request(
+            "POST", "supplement/transaction_history.do", signed_params
+        )
 
     async def get_deposit_history(
         self, status: str, startTime: str = None, endTime: str = None, coin: str = None
@@ -75,7 +79,13 @@ class AccountClient(LBankAuthUtils):
         Returns:
             Dict[str, Any]: Deposit history data.
         """
-        self.log.debug("Fetching deposit history", status=status, startTime=startTime, endTime=endTime, coin=coin)
+        self.log.debug(
+            "Fetching deposit history",
+            status=status,
+            startTime=startTime,
+            endTime=endTime,
+            coin=coin,
+        )
         params = {"status": status}
         if startTime:
             params["startTime"] = startTime
@@ -84,10 +94,17 @@ class AccountClient(LBankAuthUtils):
         if coin:
             params["coin"] = coin
         signed_params = self._sign(params)
-        return await self._request("POST", "supplement/deposit_history.do", signed_params)
+        return await self._request(
+            "POST", "supplement/deposit_history.do", signed_params
+        )
 
     async def get_withdraw_history(
-        self, status: str, startTime: str = None, endTime: str = None, coin: str = None, withdrawOrderId: str = None
+        self,
+        status: str,
+        startTime: str = None,
+        endTime: str = None,
+        coin: str = None,
+        withdrawOrderId: str = None,
     ) -> Dict[str, Any]:
         """
         Retrieve historical withdrawal details.
@@ -103,8 +120,12 @@ class AccountClient(LBankAuthUtils):
             Dict[str, Any]: Withdrawal history data.
         """
         self.log.debug(
-            "Fetching withdrawal history", status=status, startTime=startTime, endTime=endTime, coin=coin,
-            withdrawOrderId=withdrawOrderId
+            "Fetching withdrawal history",
+            status=status,
+            startTime=startTime,
+            endTime=endTime,
+            coin=coin,
+            withdrawOrderId=withdrawOrderId,
         )
         params = {"status": status}
         if startTime:
@@ -134,7 +155,9 @@ class AccountClient(LBankAuthUtils):
         if networkName:
             params["networkName"] = networkName
         signed_params = self._sign(params)
-        return await self._request("POST", "supplement/get_deposit_address.do", signed_params)
+        return await self._request(
+            "POST", "supplement/get_deposit_address.do", signed_params
+        )
 
     async def get_asset_detail(self, coin: str) -> Dict[str, Any]:
         """
@@ -168,21 +191,29 @@ class AccountClient(LBankAuthUtils):
         if category:
             params["category"] = category
         signed_params = self._sign(params)
-        return await self._request("POST", "supplement/customer_trade_fee.do", signed_params)
+        return await self._request(
+            "POST", "supplement/customer_trade_fee.do", signed_params
+        )
 
     async def get_trade_history_info(
-        self, symbol: str, current_page: int = 1, page_length: int = 1, status: bool = True
+        self,
+        symbol: str,
+        current_page: int = 1,
+        page_length: int = 1,
+        status: bool = True,
     ) -> Dict[str, Any]:
         """Check all orders(The default query is for orders placed within 24 hours. When the status is empty,
-           the default query is for cancelled and completely filled orders)"""
+        the default query is for cancelled and completely filled orders)"""
         params = {
             "symbol": symbol,
             "current_page": current_page,
             "page_length": page_length,
-            "status": status
+            "status": status,
         }
         signed_params = self._sign(params)
-        return await self._request("POST", "supplement/orders_info_history.do", signed_params)
+        return await self._request(
+            "POST", "supplement/orders_info_history.do", signed_params
+        )
 
     async def get_usert_info(self) -> Dict[str, Any]:
         """Get user information."""
@@ -192,8 +223,17 @@ class AccountClient(LBankAuthUtils):
         return await self._request("POST", "supplement/userinfo.do", signed_params)
 
     async def do_withdraw(
-        self, address: str, networkName: str, coin: str, amount: str, fee: float = None, memo: str = None,
-        mark: str = None, name: str = None, withdrawOrderId: str = None, _type: int = None
+        self,
+        address: str,
+        networkName: str,
+        coin: str,
+        amount: str,
+        fee: float = None,
+        memo: str = None,
+        mark: str = None,
+        name: str = None,
+        withdrawOrderId: str = None,
+        _type: int = None,
     ) -> Dict[str, Any]:
         """Historical transaction details
         :address str: withdrawal address, when type=1, it is the transfer account
@@ -208,7 +248,13 @@ class AccountClient(LBankAuthUtils):
         :withdrawOrderId str: 	Custom withdrawal id
         :_type int: type=1 is for intra-site transfer
         """
-        params = {"address": address, "networkName": networkName, "coin": coin, "amount": amount, "fee": fee}
+        params = {
+            "address": address,
+            "networkName": networkName,
+            "coin": coin,
+            "amount": amount,
+            "fee": fee,
+        }
         if memo:
             params["memo"] = memo
         if mark:

@@ -2,7 +2,7 @@ from .REST_utils import LBankAuthUtils
 from typing import Dict, Any
 
 
-class MarketDataClient(LBankAuthUtils):
+class RESTData(LBankAuthUtils):
     """
     Provides methods for retrieving market-related data from the LBank API.
     """
@@ -50,7 +50,9 @@ class MarketDataClient(LBankAuthUtils):
         params = {"symbol": symbol}
         return await self._request("GET", "ticker/24hr.do", params)
 
-    async def get_trades(self, symbol: str, size: int, _time: str = None) -> Dict[str, Any]:
+    async def get_trades(
+        self, symbol: str, size: int, _time: str = None
+    ) -> Dict[str, Any]:
         """
         Retrieve recent trades for a specific trading pair.
 
@@ -68,7 +70,9 @@ class MarketDataClient(LBankAuthUtils):
             params["time"] = _time
         return await self._request("GET", "supplement/trades.do", params)
 
-    async def get_kbar(self, symbol: str, size: int, _type: str, _time: str = None) -> Dict[str, Any]:
+    async def get_kbar(
+        self, symbol: str, size: int, _type: str, _time: str = None
+    ) -> Dict[str, Any]:
         """
         Query K Bar Data.
 
@@ -81,7 +85,9 @@ class MarketDataClient(LBankAuthUtils):
         Returns:
             Dict[str, Any]: K Bar data.
         """
-        self.log.debug("Fetching K Bar data", symbol=symbol, size=size, _type=_type, _time=_time)
+        self.log.debug(
+            "Fetching K Bar data", symbol=symbol, size=size, _type=_type, _time=_time
+        )
         params = {"symbol": symbol, "size": size, "type": _type}
         if _time:
             params["time"] = _time

@@ -2,7 +2,7 @@ import pytest
 import asyncio
 from unittest.mock import AsyncMock, patch
 
-from API import ClientManager
+from Lbank_client import ClientManager
 
 
 @pytest.fixture
