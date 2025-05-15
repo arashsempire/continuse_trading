@@ -39,28 +39,32 @@ def configure_logging(log_level=logging.INFO):
             # Add ISO timestamp (local time)
             structlog.processors.TimeStamper(fmt="iso", utc=False),
             # Pretty-print logs to console with colors
-            structlog.dev.ConsoleRenderer(colors=True),
-            # Use structlog.processors.JSONRenderer() for JSON output
+            structlog.dev.ConsoleRenderer(),
         ],
-        # Use standard logging factory
         logger_factory=structlog.stdlib.LoggerFactory(),
-        # Use standard bound logger
         wrapper_class=structlog.stdlib.BoundLogger,
-        # Cache loggers for performance
         cache_logger_on_first_use=True,
     )
 
-    # Configure the standard logging module (root logger)
-    # No need for a specific formatter here as structlog handles it via ConsoleRenderer
-    # or JSONRenderer
-
-    # Console Handler
+    # Configure the standard library logging (which structlog will use)
+    # This handler outputs to stdout and uses the ConsoleRenderer for colorful output
     console_handler = logging.StreamHandler(sys.stdout)
-    # The handler's formatter is effectively managed by structlog's processors
+    # The formatter is important here for structlog to correctly process and colorize
+    # logs from the standard library logger.
+    formatter = structlog.stdlib.ProcessorFormatter(
+        processor=structlog.dev.ConsoleRenderer(),
+        # Processors for the formatter, typically a subset of the global processors
+        # that prepare the log record for rendering.
+        foreign_pre_chain=[
+            structlog.contextvars.merge_contextvars,
+            structlog.processors.add_log_level,
+            structlog.processors.TimeStamper(fmt="iso", utc=False),
+        ],
+    )
+    console_handler.setFormatter(formatter)
 
-    # File Handler (Optional: uncomment to enable file logging)
-    # file_handler = logging.FileHandler("app.log")
-    # You might want a different renderer for files (e.g., JSONRenderer)
+    # Optional: File handler if you want to also log to a file (uncomment to enable)
+    # file_handler = logging.FileHandler("application.log")
     # file_formatter = structlog.stdlib.ProcessorFormatter(
     #     processor=structlog.processors.JSONRenderer(),
     # )
@@ -81,7 +85,6 @@ def configure_logging(log_level=logging.INFO):
     initial_log.info("Logging configured", level=logging.getLevelName(log_level))
 
 
-# Example usage (typically called once at application startup)
 if __name__ == "__main__":
     configure_logging(logging.DEBUG)  # Configure for DEBUG level
 
@@ -95,7 +98,6 @@ if __name__ == "__main__":
     except ZeroDivisionError:
         log.exception("Caught an exception.")
 
-    # Example of using BaseLogger
     class MyService(BaseLogger):
         def do_something(self):
             self.log.info("Doing something in MyService.")

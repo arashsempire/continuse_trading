@@ -13,3 +13,4 @@ dask
 structlog
 # requests
 httpx
+websockets
